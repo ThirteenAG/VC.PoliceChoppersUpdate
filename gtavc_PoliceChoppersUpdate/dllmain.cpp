@@ -121,9 +121,9 @@ loc_5AC6E0:
 
 DWORD HeliCount;
 DWORD temp_eax;
-void test()
+void AddHeli()
 {
-	for (unsigned int it = HeliCount; it < (HeliCount + g_HeliLimitx4); it++)
+	for (unsigned int it = HeliCount; it < (HeliCount + g_HeliLimitx4); it+=4)
 	{
 		
 		if (*(DWORD *)it == 0)
@@ -131,7 +131,6 @@ void test()
 			CPatch::SetUInt(it, temp_eax);
 			break;
 		}
-		it + 3;
 	}
 }
 
@@ -151,7 +150,7 @@ void __declspec(naked)asm_CHeli__UpdateHelisFix()
 			/*add*/mov HeliCount, offset PoliceHelis
 	}
 	//CPatch::SetUInt(HeliCount, temp_eax);
-	__asm call test
+	__asm call AddHeli
 _asm
 {
 			mov jmpAddr, 0x5ACE3E
@@ -355,7 +354,7 @@ DWORD WINAPI Thread(LPVOID)
 		CPatch::RedirectCall(0x5ACDB5, CWanted__NumOfHelisRequired);
 
 		CPatch::SetUInt(0x5AC8FC + 0x6, g_HeliHealth);
-		CPatch::SetUInt(0x5AC8E7 + 0x6, g_HeliHealth / 1.75f);
+		CPatch::SetUInt(0x5AC8E7 + 0x6, (unsigned int)(g_HeliHealth / 1.75f));
 
 		CPatch::SetUInt(0x5ACDEE + 0x2, g_Time1);
 		CPatch::SetUInt(0x5AD26E + 0x1, g_Time2);
