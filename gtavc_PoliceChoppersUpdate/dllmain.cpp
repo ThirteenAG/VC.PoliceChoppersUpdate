@@ -1,301 +1,117 @@
 #include "stdafx.h"
-#include "CPatch.h"
-#include "IniReader.h"
+#include "include\IniReader.h"
+#include "include\injector\injector.hpp"
+#include "include\injector\assembly.hpp"
 #include <vector>
 
+
+struct RwV3D
+{
+	float x, y, z;
+};
+struct CHeliVC
+{
+	char pad[0x34];
+	RwV3D pos;
+	char pad2[0x284];
+	RwV3D shadowPos;
+	char pad3[0xC];
+	float unk;
+	char pad4[0x7C];
+};
+
 int g_1StarHeliAmount, g_2StarHeliAmount, g_3StarHeliAmount, g_4StarHeliAmount, g_5StarHeliAmount, g_6StarHeliAmount, g_HeliHealth;
-unsigned int g_HeliLimit, g_HeliLimitx4;
+unsigned int g_HeliLimit;
 unsigned int g_Time1, g_Time2;
 
-std::vector<int> PoliceHelis;
-
-#define	 	GenerateHeli	 	0x5ACB30
-#define	 	CHeli__UpdateHelis	 	0x5ACDA0
-#define	 	CHeli__TestSniperCollision	 	0x5AC520
-#define	 	CHeli__TestRocketCollision	 	0x5AC9A0
-#define	 	CHeli__TestBulletCollision	 	0x5AC6C0
-#define	 	CHeli__InitHelis	 	0x5AD4A0
-
-DWORD jmpAddr;
-void __declspec(naked)asm_GenerateHeli()
-{
-	_asm
-	{
-		inc     ebp
-		cmp     ebp, g_HeliLimit
-		mov jmpAddr, 0x5ACD80
-		jmp jmpAddr
-	}
-}
-
-void __declspec(naked)asm_CHeli__UpdateHelis()
-{
-	_asm
-	{
-		inc esi
-		cmp esi, g_HeliLimit
-		jl loc_5ACE92
-		mov jmpAddr, 0x5ACEF4
-		jmp jmpAddr
-	loc_5ACE92:
-		mov jmpAddr, 0x5ACE92
-		jmp jmpAddr
-	}
-}
-
-void __declspec(naked)asm_CHeli__UpdateHelis2()
-{
-	_asm
-	{
-		inc ebp
-		cmp ebp, g_HeliLimit
-		jl loc_5ACEF6
-		mov jmpAddr, 0x5AD41C
-		jmp jmpAddr
-	loc_5ACEF6:
-		mov jmpAddr, 0x5ACEF6
-		jmp jmpAddr
-	}
-}
-
-void __declspec(naked)asm_CHeli__UpdateHelis3()
-{
-	_asm
-	{
-		inc eax
-		cmp eax, g_HeliLimit
-		jl loc_5AD474
-		mov jmpAddr, 0x5AD495
-		jmp jmpAddr
-	loc_5AD474:
-		mov jmpAddr, 0x5AD474
-		jmp jmpAddr
-	}
-}
-
-void __declspec(naked)asm_CHeli__TestSniperCollision()
-{
-	_asm
-	{
-		inc ebp
-		cmp ebp, g_HeliLimit
-		jl      loc_5AC5B0
-		mov jmpAddr, 0x5AC6A7
-		jmp jmpAddr
-loc_5AC5B0:
-		mov jmpAddr, 0x5AC5B0
-		jmp jmpAddr
-	}
-}
-
-void __declspec(naked)asm_CHeli__TestRocketCollision()
-{
-	_asm
-	{
-		inc     ebp
-		cmp     ebp, g_HeliLimit
-		jl      loc_5AC9B0
-		mov jmpAddr, 0x5ACA7B
-		jmp jmpAddr
-loc_5AC9B0:
-		mov jmpAddr, 0x5AC9B0
-		jmp jmpAddr
-	}
-}
-
-void __declspec(naked)asm_CHeli__TestBulletCollision()
-{
-	_asm
-	{
-		inc ebp
-		cmp ebp, g_HeliLimit
-		jl      loc_5AC6E0
-		mov jmpAddr, 0x5AC97E
-		jmp jmpAddr
-loc_5AC6E0:
-		mov jmpAddr, 0x5AC6E0
-		jmp jmpAddr
-	}
-}
-
-
-DWORD HeliCount;
-DWORD temp_eax;
-void AddHeli()
-{
-	for (unsigned int it = HeliCount; it < (HeliCount + g_HeliLimitx4); it+=4)
-	{
-		
-		if (*(DWORD *)it == 0)
-		{
-			CPatch::SetUInt(it, temp_eax);
-			break;
-		}
-	}
-}
-
-
-void __declspec(naked)asm_CHeli__UpdateHelisFix()
-{
-	_asm
-	{
-		pop     ecx
-
-			mov temp_eax, eax
-
-			mov eax, dword ptr ds : [0xA10A6A]
-			dec eax
-			imul eax, 4
-			mov HeliCount, eax
-			/*add*/mov HeliCount, offset PoliceHelis
-	}
-	//CPatch::SetUInt(HeliCount, temp_eax);
-	__asm call AddHeli
-_asm
-{
-			mov jmpAddr, 0x5ACE3E
-			jmp jmpAddr
-		
-	}
-}
-
-void __declspec(naked)asm_CHeli__UpdateHelis4()
-{
-	_asm
-	{
-		add     esp, 40
-		cmp     esi, g_HeliLimit
-		mov jmpAddr, 0x5AD17A
-		jmp jmpAddr
-	}
-}
-
-
-void __declspec(naked)asm_CHeli__UpdateHelis5()
-{
-	_asm
-	{
-		inc     eax
-		cmp     eax, g_HeliLimit
-		jl loc_5AD420
-		mov jmpAddr, 0x5AD44D
-		jmp jmpAddr
-	loc_5AD420:
-		mov jmpAddr, 0x5AD420
-		jmp jmpAddr
-	}
-}
-
-void __declspec(naked)CHeli_InitHelis()
-{
-	_asm
-	{
-			mov ds : [0x9785D4], 00000000
-			mov word ptr ds : [0xA10A6A], 0000
-			mov byte ptr ds : [0xA10B40], 00
-			mov ds : [PoliceHelis], 00000000
-			mov byte ptr ds : [0xA10ADB], 00
-			mov ds : [PoliceHelis + 0x4], 00000000
-			mov ds : [PoliceHelis + 0x8], 00000000
-			mov ds : [PoliceHelis + 0xC], 00000000
-			mov ds : [PoliceHelis + 0xC + 0x4], 00000000
-			ret
-	}
-}
-
+std::vector<CHeliVC *> PoliceHelisPtrs;
 
 void IncreasePoliceHelisArray()
 {
-	PoliceHelis.resize(g_HeliLimit);
+	injector::AdjustPointer(0x5AC506, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     ecx, ds:dword_813D10[ebx*4]; int
+	injector::AdjustPointer(0x5AC5B3, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     edx, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AC64D, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     eax, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AC669, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     eax, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AC67D, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     eax, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AC690, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     eax, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AC6E3, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     eax, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AC732, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     eax, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AC8CB, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     edx, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AC8D8, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     eax, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AC92F, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     eax, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AC94C, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     eax, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AC960, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     eax, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AC9B3, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     edx, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5ACA2F, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     eax, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5ACA4B, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     eax, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5ACA5F, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     eax, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5ACD66, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     ebx, ds:dword_813D10[ebx*4]
+	injector::AdjustPointer(0x5ACE1D, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> cmp     ds:dword_813D10, 0
+	injector::AdjustPointer(0x5ACE26, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     ds:dword_813D10, eax
+	injector::AdjustPointer(0x5ACE95, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     edi, ds:dword_813D10[esi*4]
+	injector::AdjustPointer(0x5ACEC3, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     ecx, ds:dword_813D10[esi*4]
+	injector::AdjustPointer(0x5ACED8, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     ds:dword_813D10[esi*4], 0
+	injector::AdjustPointer(0x5ACEF9, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     ecx, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AD033, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     eax, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AD19A, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     ecx, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AD1A8, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     ecx, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AD1B6, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     ecx, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AD1C4, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     eax, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AD1D1, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     eax, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AD1E0, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     ecx, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AD1F5, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     ds:dword_813D10[ebp*4], 0
+	injector::AdjustPointer(0x5AD324, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     ecx, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AD332, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     eax, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AD350, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     edi, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AD361, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     edx, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AD380, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     esi, ds:dword_813D10[ebp*4]
+	injector::AdjustPointer(0x5AD423, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     ebx, ds:dword_813D10[eax*4]
+	injector::AdjustPointer(0x5AD477, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     ecx, ds:dword_813D10[eax*4]
+	injector::AdjustPointer(0x5AD4BC, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D10 + 0x0  -> mov     ds:dword_813D10, 0
+	injector::AdjustPointer(0x5ACE32, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D14 + 0x0->cmp     ds : dword_813D14, 0
+	injector::AdjustPointer(0x5ACE3A, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D14 + 0x0->mov     ds : dword_813D14, eax
+	injector::AdjustPointer(0x5AD4CD, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D14 + 0x0->mov     ds : dword_813D14, 0
+	injector::AdjustPointer(0x5ACE52, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D18 + 0x0->cmp     ds : dword_813D18, 0
+	injector::AdjustPointer(0x5ACE61, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D18 + 0x0->mov     ds : dword_813D18, eax
+	injector::AdjustPointer(0x5ACE81, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D18 + 0x0->mov     eax, ds : dword_813D18
+	injector::AdjustPointer(0x5AD4D7, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D18 + 0x0->mov     ds : dword_813D18, 0
+	injector::AdjustPointer(0x5AD4E1, &PoliceHelisPtrs.front(), 0x813D10, 0x813D1C);  //0x813D1C + 0x0->mov     ds : dword_813D1C, 0
 
-	CPatch::AdjustPointer(GenerateHeli + 0x233, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(0x5AD474, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(0x5AD420, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(0x5ACEF6, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(0x5ACE92, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__UpdateHelis + 0x85, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__UpdateHelis + 0x7B, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__UpdateHelis + 0x5DD, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__UpdateHelis + 0x5BE, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__UpdateHelis + 0x5AD, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__UpdateHelis + 0x58F, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__UpdateHelis + 0x581, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__UpdateHelis + 0x452, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__UpdateHelis + 0x43D, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__UpdateHelis + 0x42E, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__UpdateHelis + 0x421, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__UpdateHelis + 0x413, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__UpdateHelis + 0x405, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__UpdateHelis + 0x3F7, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__UpdateHelis + 0x290, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__UpdateHelis + 0x135, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__UpdateHelis + 0x120, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(0x5AC5B0, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__TestSniperCollision + 0x16D, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__TestSniperCollision + 0x15A, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__TestSniperCollision + 0x146, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__TestSniperCollision + 0x12A, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(0x5AC9B0, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__TestRocketCollision + 0xBC, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__TestRocketCollision + 0xA8, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__TestRocketCollision + 0x8C, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(0x5AC6E0, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__TestBulletCollision + 0x6F, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__TestBulletCollision + 0x29D, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__TestBulletCollision + 0x289, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__TestBulletCollision + 0x26C, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__TestBulletCollision + 0x215, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__TestBulletCollision + 0x208, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(0x5AC503, &PoliceHelis, 0x813D10, 0x813D10);
-	CPatch::AdjustPointer(CHeli__InitHelis + 0x1A, &PoliceHelis, 0x813D10, 0x813D10);
+	//CHeli::UpdateHelis(void)
+	injector::WriteMemory<char>(0x5ACEEF + 0x2, (char)g_HeliLimit, true);
+	injector::WriteMemory<char>(0x5AD413 + 0x2, (char)g_HeliLimit, true);
+	injector::WriteMemory<char>(0x5AD490 + 0x2, (char)g_HeliLimit, true);
+	injector::WriteMemory<char>(0x5AD448 + 0x2, (char)g_HeliLimit, true);
 
-	CPatch::AdjustPointer(0x5ACE30, &PoliceHelis, 0x813D10, 0x813D14);
-	CPatch::AdjustPointer(CHeli__UpdateHelis + 0x99, &PoliceHelis, 0x813D10, 0x813D14);
-	CPatch::AdjustPointer(CHeli__InitHelis + 0x2B, &PoliceHelis, 0x813D10, 0x813D14);
+	//CHeli::TestSniperCollision(CVector *,CVector *)
+	injector::WriteMemory<char>(0x5AC69E + 0x2, (char)g_HeliLimit, true);
 
-	/*CPatch::AdjustPointer(CHeli__UpdateHelis + 0xB0, &PoliceHelis, 0x813D10, 0x813D18);
-	CPatch::AdjustPointer(CHeli__UpdateHelis + 0xC0, &PoliceHelis, 0x813D10, 0x813D18);
-	CPatch::AdjustPointer(0x5ACE80, &PoliceHelis, 0x813D10, 0x813D18);
-	CPatch::AdjustPointer(CHeli__InitHelis + 0x35, &PoliceHelis, 0x813D10, 0x813D18);
+	//CHeli::TestRocketCollision(CVector *)
+	injector::WriteMemory<char>(0x5ACA72 + 0x2, (char)g_HeliLimit, true);
 
-	CPatch::AdjustPointer(CHeli__InitHelis + 0x3F, &PoliceHelis, 0x813D10, 0x813D1C);*/
+	//CHeli::TestBulletCollision(CVector *,CVector *,CVector *,int)
+	injector::WriteMemory<char>(0x5AC975 + 0x2, (char)g_HeliLimit, true);
+
+	//CHeli::SpecialHeliPreRender(void)
+	injector::WriteMemory<char>(0x5AC514 + 0x2, (char)g_HeliLimit, true);
+
+	//CHeli::ProcessControl(void)
+	//injector::WriteMemory<char>(0x5AF04A + 0x2, (char)g_HeliLimit, true);
+
+	//GenerateHeli(bool)
+	injector::WriteMemory<char>(0x5ACD7C + 0x3, (char)g_HeliLimit, true);
 
 
-	//GenerateHeli
-	CPatch::SetUShort(0x5ACD60, 0xDD8B); // mov ebx,ebp
-	CPatch::Nop(0x5ACD60 + 0x2, 1);
-	CPatch::RedirectJump(0x5ACD7B, asm_GenerateHeli);
+	injector::MakeNOP(0x5ACEE0, 2, true);
+	injector::MakeNOP(0x5ACEE5, 2, true);
 
-	//CHeli__UpdateHelis
-	CPatch::RedirectJump(0x5ACEEE, asm_CHeli__UpdateHelis);
-	CPatch::RedirectJump(0x5AD412, asm_CHeli__UpdateHelis2);
-	CPatch::RedirectJump(0x5AD48F, asm_CHeli__UpdateHelis3);
-
-	//CHeli__TestSniperCollision
-	CPatch::RedirectJump(0x5AC69D, asm_CHeli__TestSniperCollision);
-
-	//CHeli__TestRocketCollision
-	CPatch::RedirectJump(0x5ACA71, asm_CHeli__TestRocketCollision);
-	//CHeli__TestBulletCollision
-	CPatch::RedirectJump(0x5AC974, asm_CHeli__TestBulletCollision);
-	//CHeli__InitHelis
-	CPatch::RedirectJump(CHeli__InitHelis, CHeli_InitHelis);
-
-	//CHeli__UpdateHelis fix
-	CPatch::RedirectJump(0x5ACE1B, asm_CHeli__UpdateHelisFix);
-	CPatch::RedirectJump(0x5AD174, asm_CHeli__UpdateHelis4);
-	//CPatch::Nop(0x5ACEE0, 2);
-	CPatch::Nop(0x5ACEE5, 2);
-
-	CPatch::Nop(0x5AD1FD, 2);
-	CPatch::Nop(0x5AD202, 2);
-
-	CPatch::RedirectJump(0x5AD447, asm_CHeli__UpdateHelis5);
+	injector::MakeNOP(0x5AD1FD, 2, true);
+	injector::MakeNOP(0x5AD202, 2, true);
 }
 
 signed int __fastcall CWanted__NumOfHelisRequired(int CPlayerPed_wanted)
 {
-	signed int result; // eax@3
+	signed int result;
 
 	if ((*(BYTE *)(CPlayerPed_wanted + 30) >> 1) & 1 || *(BYTE *)(CPlayerPed_wanted + 30) & 1)
 	{
@@ -331,6 +147,20 @@ signed int __fastcall CWanted__NumOfHelisRequired(int CPlayerPed_wanted)
 	return result;
 }
 
+
+auto asm_CHeli__UpdateHelisFix = [](injector::reg_pack& regs)
+{
+	for (DWORD it = (DWORD)&PoliceHelisPtrs.front(); it < (DWORD)&PoliceHelisPtrs.front() + (g_HeliLimit*4); it += 4)
+		{
+			if (*(DWORD*)it == 0)
+			{
+				injector::WriteMemory(it, regs.eax);
+				break;
+			}
+		}
+	
+};
+
 DWORD WINAPI Thread(LPVOID)
 {
 	CIniReader iniReader("");
@@ -346,22 +176,22 @@ DWORD WINAPI Thread(LPVOID)
 		g_Time1 = iniReader.ReadInteger("MAIN", "Time1", 15000);
 		g_Time2 = iniReader.ReadInteger("MAIN", "Time2", 50000);
 
-		g_HeliLimitx4 = g_HeliLimit * 4;
-
+		PoliceHelisPtrs.resize(g_HeliLimit);
 		IncreasePoliceHelisArray();
 
-		CPatch::RedirectCall(0x409083, CWanted__NumOfHelisRequired);
-		CPatch::RedirectCall(0x5ACDB5, CWanted__NumOfHelisRequired);
+		injector::MakeCALL(0x409083, CWanted__NumOfHelisRequired);
+		injector::MakeCALL(0x5ACDB5, CWanted__NumOfHelisRequired);
 
-		CPatch::SetUInt(0x5AC8FC + 0x6, g_HeliHealth);
-		CPatch::SetUInt(0x5AC8E7 + 0x6, (unsigned int)(g_HeliHealth / 1.75f));
+		injector::MakeInline<0x5ACE23, 0x5ACE3E>(asm_CHeli__UpdateHelisFix);
 
-		CPatch::SetUInt(0x5ACDEE + 0x2, g_Time1);
-		CPatch::SetUInt(0x5AD26E + 0x1, g_Time2);
+		injector::WriteMemory(0x5AC8FC + 0x6, g_HeliHealth, true);
+		injector::WriteMemory(0x5AC8E7 + 0x6, (unsigned int)(g_HeliHealth / 1.75f), true);
+
+		injector::WriteMemory(0x5ACDEE + 0x2, g_Time1, true);
+		injector::WriteMemory(0x5AD26E + 0x1, g_Time2, true);
 
 	return 0;
 }
-
 
 BOOL APIENTRY DllMain(HMODULE /*hModule*/, DWORD reason, LPVOID /*lpReserved*/)
 {
@@ -371,4 +201,5 @@ BOOL APIENTRY DllMain(HMODULE /*hModule*/, DWORD reason, LPVOID /*lpReserved*/)
 	}
 	return TRUE;
 }
+
 
